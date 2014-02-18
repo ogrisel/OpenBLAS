@@ -258,7 +258,7 @@ int  goto_get_num_procs  (void) {
 void openblas_fork_handler()
 {
   int err;
-  err = pthread_atfork (BLASFUNC(blas_thread_shutdown), blas_thread_init, blas_thread_init);
+  err = pthread_atfork (BLASFUNC(blas_thread_shutdown), NULL, NULL);
   if(err != 0)
     openblas_warning(0, "OpenBLAS Warning ... cannot install fork handler. You may meet hang after fork.\n");
 }
