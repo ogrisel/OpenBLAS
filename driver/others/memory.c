@@ -143,6 +143,8 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 gotoblas_t *gotoblas = NULL;
 #endif
 
+extern void openblas_warning(int verbose, const char * msg);
+
 #ifndef SMP
 
 #define blas_cpu_number 1
@@ -251,6 +253,14 @@ int blas_num_threads = 0;
 
 int  goto_get_num_procs  (void) {
   return blas_cpu_number;
+}
+
+void openblas_fork_handler()
+{
+  int err;
+  err = pthread_atfork (BLASFUNC(blas_thread_shutdown), NULL, NULL);
+  if(err != 0)
+    openblas_warning(0, "OpenBLAS Warning ... cannot install fork handler. You may meet hang after fork.\n");
 }
 
 int blas_get_cpu_number(void){
@@ -1268,6 +1278,9 @@ void CONSTRUCTOR gotoblas_init(void) {
 
   if (gotoblas_initialized) return;
 
+#ifdef SMP
+  openblas_fork_handler();
+#endif
 
 #ifdef PROFILE
    moncontrol (0);

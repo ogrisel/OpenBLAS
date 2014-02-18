@@ -74,6 +74,21 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/resource.h>
 #endif
 
+#ifndef likely
+#ifdef __GNUC__
+#define likely(x) __builtin_expect(!!(x), 1)
+#else
+#define likely(x) (x)
+#endif
+#endif
+#ifndef unlikely
+#ifdef __GNUC__
+#define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#define unlikely(x) (x)
+#endif
+#endif
+
 #ifdef SMP_SERVER
 
 #undef MONITOR
@@ -583,7 +598,9 @@ int blas_thread_init(void){
 static BLASULONG exec_queue_lock = 0;
 
 int exec_blas_async(BLASLONG pos, blas_queue_t *queue){
-
+#ifdef SMP_SERVER
+  if (unlikely(blas_server_avail == 0)) blas_thread_init();
+#endif
   BLASLONG i = 0;
   blas_queue_t *current = queue;
 #if defined(OS_LINUX) && !defined(NO_AFFINITY) && !defined(PARAMTEST)
@@ -707,7 +724,9 @@ int exec_blas_async_wait(BLASLONG num, blas_queue_t *queue){
 
 /* Execute Threads */
 int exec_blas(BLASLONG num, blas_queue_t *queue){
-
+#ifdef SMP_SERVER
+   if (unlikely(blas_server_avail == 0)) blas_thread_init();
+#endif
    int (*routine)(blas_arg_t *, void *, void *, double *, double *, BLASLONG);
 
 #ifdef TIMING_DEBUG
